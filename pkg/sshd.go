@@ -16,26 +16,52 @@ import (
 )
 
 
-func PublicKeyCallback(c ssh.ConnMetadata, pubKey ssh.PublicKey)(*ssh.Permissions, error){
-	authorizedKeysBytes, err := ioutil.ReadFile("authorized_keys")
-	if err != nil {
 
-		return nil, fmt.Errorf("can't read authorized_keys")
+type SSHD struct  {
+    authorizedKeysMap map[string]bool
+}
+
+func NewSSHD() *SSHD {
+    return &SSHD{}
+}
+
+
+func (s *SSHD)PublicKeyCallback(c ssh.ConnMetadata, pubKey ssh.PublicKey)(*ssh.Permissions, error) {
+
+		if s.authorizedKeysMap[string(pubKey.Marshal())] {
+			return &ssh.Permissions{
+				// Record the public key used for authentication.
+				Extensions: map[string]string{
+					"pubkey-fp": ssh.FingerprintSHA256(pubKey),
+				},
+			}, nil
+		}
+		return nil, fmt.Errorf("unknown public key for %q", c.User())
 	}
 
-	authorizedKeysMap := map[string]bool{}
+
+
+func (s *SSHD)ReadKey() error {
+
+
+	authorizedKeysBytes, err := ioutil.ReadFile("/etc/authorized_keys")
+	if err != nil {
+
+		return fmt.Errorf("can't read authorized_keys")
+	}
+
+	s.authorizedKeysMap = map[string]bool{}
 	for len(authorizedKeysBytes) > 0 {
 		pubKey, _, _, rest, err := ssh.ParseAuthorizedKey(authorizedKeysBytes)
 		if err != nil {
 			log.Fatal(err)
-			return nil, fmt.Errorf("can't read authorized_keys")
 		}
 
-		authorizedKeysMap[string(pubKey.Marshal())] = true
+		s.authorizedKeysMap[string(pubKey.Marshal())] = true
 		authorizedKeysBytes = rest
 		
 	}
-	return nil, nil
+	return nil
 }
 
 
@@ -71,7 +97,7 @@ func handleChannel(newChannel ssh.NewChannel) {
 	}
 
 	// Fire up bash for this session
-	bash := exec.Command("bash")
+	bash := exec.Command("sh")
 
 	// Prepare teardown function
 	close := func() {

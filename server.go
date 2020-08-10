@@ -31,6 +31,9 @@ func main() {
 	// net.Conn and a ssh.ServerConfig to ssh.NewServerConn, in effect, upgrading the net.Conn
 	// into an ssh.ServerConn
 
+
+	s := pkg.NewSSHD()
+	s.ReadKey()
 	config := &ssh.ServerConfig{
 		//Define a function to run when a client attempts a password login
 
@@ -43,23 +46,28 @@ func main() {
 		// },
 
 		// Remove to disable public key auth.
-		PublicKeyCallback: pkg.PublicKeyCallback,
+		PublicKeyCallback: s.PublicKeyCallback,
 		// You may also explicitly allow anonymous client authentication, though anon bash
 		// sessions may not be a wise idea
 		// NoClientAuth: true,
 	}
 
 	// You can generate a keypair with 'ssh-keygen -t rsa'
-	privateBytes, err := ioutil.ReadFile("id_rsa")
+	privateBytes, err := ioutil.ReadFile("/etc/id_rsa")
 	if err != nil {
 		msg := `
 
-Failed to load private key (./id_rsa)
+Failed to load private key (/etc/id_rsa)
 
 You can quickly fix this, with the following command:
 
 	ssh-keygen -t rsa -f id_rsa
-	cp id_rsa.pub authorized_keys
+
+
+You may also need public key on current server.. note
+the location to ~/.ssh
+
+	cp ~/.ssh/id_rsa.pub authorized_keys
 		
 		
 		`
