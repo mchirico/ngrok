@@ -1,4 +1,4 @@
-module github.com/mchirico/sshd
+module github.com/mchirico/ngrok
 
 go 1.14
 

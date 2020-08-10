@@ -20,7 +20,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/mchirico/sshd/pkg"
+	"github.com/mchirico/ngrok/pkg"
 	"golang.org/x/crypto/ssh"
 )
 
